@@ -13,16 +13,16 @@ from utils.draw_boxes import draw_boxes
 def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
-    phi = 0
+    phi = 1
     weighted_bifpn = False
-    model_path = 'checkpoints/exp1/csv_92_0.0977_0.8145.h5'
+    model_path = 'checkpoints/exp2/csv_16_0.2631_0.7740.h5'
     image_sizes = (512, 640, 768, 896, 1024, 1280, 1408)
     image_size = image_sizes[phi]
     # coco classes
     # classes = {value['id'] - 1: value['name'] for value in json.load(open('coco_90.json', 'r')).values()}
     classes = {0: "polyp"}
     num_classes = 1
-    score_threshold = 0.2
+    score_threshold = 0.3
     colors = [np.random.randint(0, 256, 3).tolist() for _ in range(num_classes)]
     _, model = efficientdet(phi=phi,
                             weighted_bifpn=weighted_bifpn,

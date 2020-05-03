@@ -95,6 +95,9 @@ def create_callbacks(training_model, prediction_model, validation_generator, arg
             from eval.coco import Evaluate
             # use prediction model for evaluation
             evaluation = Evaluate(validation_generator, prediction_model, tensorboard=tensorboard_callback)
+        elif args.dataset_type == 'csv-rand-val':
+            from eval.csv_polyp import Evaluate
+            evaluation = Evaluate(validation_generator, prediction_model, tensorboard=tensorboard_callback)
         else:
             from eval.pascal import Evaluate
             evaluation = Evaluate(validation_generator, prediction_model, tensorboard=tensorboard_callback)
@@ -192,6 +195,29 @@ def create_generators(args):
             )
         else:
             validation_generator = None
+    elif args.dataset_type == 'csv-rand-val':
+        from generators.csv_rand_val import CSVGenerator
+
+        train_generator = CSVGenerator(
+            args.annotations_path,
+            args.classes_path,
+            args.val_fraction,
+            True,  # indicates training generator
+            misc_effect=misc_effect,
+            visual_effect=visual_effect,
+            # shuffle_groups=True,
+            **common_args
+        )
+
+        validation_generator = CSVGenerator(
+            args.annotations_path,
+            args.classes_path,
+            args.val_fraction,
+            False,  # indicates as random validation set generator
+            shuffle_groups=False,
+            **common_args
+        )
+
     elif args.dataset_type == 'coco':
         # import here to prevent unnecessary dependency on cocoapi
         from generators.coco import CocoGenerator
@@ -257,7 +283,16 @@ def parse_args(args):
     csv_parser.add_argument('annotations_path', help='Path to CSV file containing annotations for training.')
     csv_parser.add_argument('classes_path', help='Path to a CSV file containing class label mapping.')
     csv_parser.add_argument('--val-annotations-path',
-                            help='Path to CSV file containing annotations for validation (optional).')
+                            help='Path to CSV file containing annotations for validation.')
+
+    csv_rand_val_parser = subparsers.add_parser('csv-rand-val')
+    csv_rand_val_parser.add_argument('annotations_path',
+                                     help='Path to CSV file containing annotations for training and validation.'
+                                          'Which will randomly be split each epoch. (default: validation 0.02)')
+    csv_rand_val_parser.add_argument('classes_path', help='Path to a CSV file containing class label mapping.')
+    csv_rand_val_parser.add_argument('--val-fraction', default=0.02, type=float,
+                                     help='The fraction that will be chosen for each epoch.')
+
     parser.add_argument('--detect-quadrangle', help='If to detect quadrangle.', action='store_true', default=False)
     parser.add_argument('--detect-text', help='If is text detection task.', action='store_true', default=False)
 
@@ -300,6 +335,12 @@ def main(args=None):
 
     # create the generators
     train_generator, validation_generator = create_generators(args)
+
+    # overwrite steps depending on training size if csv-rand-val activated
+    if args.dataset_type == 'csv-rand-val':
+        print('\ntrain size:', train_generator.size())
+        args.steps = train_generator.size()
+        print('\nNew steps:', args.steps)
 
     num_classes = train_generator.num_classes()
     num_anchors = train_generator.num_anchors
@@ -365,7 +406,7 @@ def main(args=None):
     # start training
     return model.fit_generator(
         generator=train_generator,
-        steps_per_epoch=args.steps,
+        steps_per_epoch=args.steps,  # TODO: Calculate if cvs-rand-val
         initial_epoch=0,
         epochs=args.epochs,
         verbose=1,
@@ -373,7 +414,8 @@ def main(args=None):
         workers=args.workers,
         use_multiprocessing=args.multiprocessing,
         max_queue_size=args.max_queue_size,
-        validation_data=validation_generator
+        validation_data=validation_generator,
+        # shuffle=False
     )
 
 

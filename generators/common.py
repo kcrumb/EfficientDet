@@ -57,6 +57,7 @@ class Generator(keras.utils.Sequence):
 
     def on_epoch_end(self):
         if self.shuffle_groups:
+            print("\nShuffle")
             random.shuffle(self.groups)
 
     def size(self):
