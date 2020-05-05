@@ -103,6 +103,10 @@ def create_callbacks(training_model, prediction_model, validation_generator, arg
             evaluation = Evaluate(validation_generator, prediction_model, tensorboard=tensorboard_callback)
         callbacks.append(evaluation)
 
+    # early stopping
+    early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=5)
+    callbacks.append(early_stopping)
+    
     # save the model
     if args.snapshots:
         # ensure directory created first; otherwise h5py will error after epoch.
