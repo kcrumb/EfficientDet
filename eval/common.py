@@ -292,6 +292,9 @@ def evaluate_polyp(
     num_tp = 0
     num_fp = 0
 
+    recall = np.array([])
+    precision = np.array([])
+
     # process detections and annotations
     for label in range(generator.num_classes()):
         if not generator.has_label(label):
@@ -361,7 +364,7 @@ def evaluate_polyp(
 
     print('num_fp={}, num_tp={}'.format(num_fp, num_tp))
 
-    return average_precisions
+    return average_precisions, recall, precision
 
 
 if __name__ == '__main__':

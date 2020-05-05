@@ -18,6 +18,7 @@ limitations under the License.
 from tensorflow import keras
 import tensorflow as tf
 from eval.common import evaluate_polyp
+import numpy as np
 
 
 class Evaluate(keras.callbacks.Callback):
@@ -66,7 +67,7 @@ class Evaluate(keras.callbacks.Callback):
         logs = logs or {}
 
         # run evaluation
-        average_precisions = evaluate_polyp(
+        average_precisions, recall, precision = evaluate_polyp(
             self.generator,
             self.active_model,
             iou_threshold=self.iou_threshold,
@@ -89,6 +90,18 @@ class Evaluate(keras.callbacks.Callback):
         else:
             self.mean_ap = sum(precisions) / sum(x > 0 for x in total_instances)
 
+
+        self.mean_recall = np.average(recall)
+        self.mean_precision = np.average(precision)
+
+        if ((self.mean_precision + self.mean_recall) <= 0):
+            self.f_one = 0.0
+            self.f_two = 0.0
+        else:
+            self.f_one = 2.0 * ((self.mean_precision * self.mean_recall) / (self.mean_precision + self.mean_recall))
+            self.f_two = 5.0 * ((self.mean_precision * self.mean_recall) / ((4.0 *  self.mean_precision) + self.mean_recall))
+
+
         if self.tensorboard is not None:
             if tf.version.VERSION < '2.0.0' and self.tensorboard.writer is not None:
                 summary = tf.Summary()
@@ -96,10 +109,43 @@ class Evaluate(keras.callbacks.Callback):
                 summary_value.simple_value = self.mean_ap
                 summary_value.tag = "mAP"
                 self.tensorboard.writer.add_summary(summary, epoch)
+
+                summary = tf.Summary()
+                summary_value = summary.value.add()
+                summary_value.simple_value = self.mean_recall
+                summary_value.tag = "mRecall"
+                self.tensorboard.writer.add_summary(summary, epoch)
+
+                summary = tf.Summary()
+                summary_value = summary.value.add()
+                summary_value.simple_value = self.mean_precision
+                summary_value.tag = "mPrecision"
+                self.tensorboard.writer.add_summary(summary, epoch)
+
+                summary = tf.Summary()
+                summary_value = summary.value.add()
+                summary_value.simple_value = self.f_one
+                summary_value.tag = "F1"
+                self.tensorboard.writer.add_summary(summary, epoch)
+
+                summary = tf.Summary()
+                summary_value = summary.value.add()
+                summary_value.simple_value = self.f_two
+                summary_value.tag = "F2"
+                self.tensorboard.writer.add_summary(summary, epoch)
             else:
                 tf.summary.scalar('mAP', self.mean_ap, epoch)
 
         logs['mAP'] = self.mean_ap
 
+        logs['mRecall'] = self.mean_recall
+        logs['mPrecision'] = self.mean_precision
+        logs['F1'] = self.f_one
+        logs['F2'] = self.f_two
+
         if self.verbose == 1:
             print('mAP: {:.4f}'.format(self.mean_ap))
+            print('mRecall: {:.4f}'.format(self.mean_recall))
+            print('mPrecision: {:.4f}'.format(self.mean_precision))
+            print('F1: {:.4f}'.format(self.f_one))
+            print('F2: {:.4f}'.format(self.f_two))
