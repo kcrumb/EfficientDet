@@ -13,9 +13,9 @@ from utils.draw_boxes import draw_boxes
 def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
-    phi = 1
+    phi = 3
     weighted_bifpn = False
-    model_path = 'checkpoints/exp2/csv_16_0.2631_0.7740.h5'
+    model_path = 'checkpoints/exp4_phi3/csv-rand-val_10_0.2319_0.5130.h5'
     image_sizes = (512, 640, 768, 896, 1024, 1280, 1408)
     image_size = image_sizes[phi]
     # coco classes
@@ -31,7 +31,7 @@ def main():
     model.load_weights(model_path, by_name=True)
 
     # for image_path in glob.glob('datasets/VOC2007/JPEGImages/*.jpg'):
-    for image_path in glob.glob('../../polyp-datasets/CVC-VideoClinicDB-test/1/*.png'):
+    for image_path in glob.glob('../../polyp-datasets/ETIS-LaribPolypDB/ETIS-LaribPolypDB/*.tif'):
     # for image_path in glob.glob('D:/Users/kevin/Desktop/imagenet/*.jpg'):
         image = cv2.imread(image_path)
         src_image = image.copy()
