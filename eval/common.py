@@ -368,43 +368,33 @@ def evaluate_polyp(
 
 
 if __name__ == '__main__':
-    # from generators.pascal import PascalVocGenerator
-    from generators.csv_ import CSVGenerator
+    from generators.pascal import PascalVocGenerator
     from model import efficientdet
     import os
 
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-    phi = 3
+    phi = 1
     weighted_bifpn = False
     common_args = {
         'batch_size': 1,
         'phi': phi,
     }
-    test_generator = CSVGenerator(
-        '../../../polyp-datasets/ETIS-LaribPolypDB.csv',
-        '../../../polyp-datasets/class_id.csv',
+    test_generator = PascalVocGenerator(
+        'datasets/VOC2007',
+        'test',
         shuffle_groups=False,
-        # skip_truncated=False,
-        # skip_difficult=True,
+        skip_truncated=False,
+        skip_difficult=True,
         **common_args
     )
-    # test_generator = PascalVocGenerator(
-    #     'datasets/VOC2007',
-    #     'test',
-    #     shuffle_groups=False,
-    #     skip_truncated=False,
-    #     skip_difficult=True,
-    #     **common_args
-    # )
-    model_path = '../checkpoints/exp4_phi3/csv-rand-val_12_0.2134_0.5407.h5'
-    # model_path = 'checkpoints/2019-12-03/pascal_05_0.6283_1.1975_0.8029.h5'
+    model_path = 'checkpoints/2019-12-03/pascal_05_0.6283_1.1975_0.8029.h5'
     input_shape = (test_generator.image_size, test_generator.image_size)
     anchors = test_generator.anchors
     num_classes = test_generator.num_classes()
     model, prediction_model = efficientdet(phi=phi, num_classes=num_classes, weighted_bifpn=weighted_bifpn)
     prediction_model.load_weights(model_path, by_name=True)
-    average_precisions, recall, precision = evaluate_polyp(test_generator, prediction_model, visualize=False)
+    average_precisions = evaluate(test_generator, prediction_model, visualize=False)
     # compute per class average precision
     total_instances = []
     precisions = []
@@ -415,19 +405,3 @@ if __name__ == '__main__':
         precisions.append(average_precision)
     mean_ap = sum(precisions) / sum(x > 0 for x in total_instances)
     print('mAP: {:.4f}'.format(mean_ap))
-
-
-    mean_recall = np.average(recall)
-    mean_precision = np.average(precision)
-
-    if (mean_precision + mean_recall) <= 0:
-        f_one = 0.0
-        f_two = 0.0
-    else:
-        f_one = 2.0 * ((mean_precision * mean_recall) / (mean_precision + mean_recall))
-        f_two = 5.0 * ((mean_precision * mean_recall) / ((4.0 * mean_precision) + mean_recall))
-
-    print('mRecall: {:.4f}'.format(mean_recall))
-    print('mPrecision: {:.4f}'.format(mean_precision))
-    print('F1: {:.4f}'.format(f_one))
-    print('F2: {:.4f}'.format(f_two))
