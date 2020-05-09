@@ -1,6 +1,6 @@
 from generators.csv_ import CSVGenerator
 from model import efficientdet
-from eval.common import evaluate_polyp
+from eval.common import evaluate
 import os
 import numpy as np
 
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     num_classes = test_generator.num_classes()
     model, prediction_model = efficientdet(phi=phi, num_classes=num_classes, weighted_bifpn=weighted_bifpn)
     prediction_model.load_weights(model_path, by_name=True)
-    average_precisions, recall, precision = evaluate_polyp(test_generator, prediction_model, visualize=False)
+    average_precisions, recall, precision = evaluate(test_generator, prediction_model, visualize=False, more_metrics=True)
 
     # compute per class average precision
     total_instances = []

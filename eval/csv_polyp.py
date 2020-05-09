@@ -17,7 +17,7 @@ limitations under the License.
 # import keras
 from tensorflow import keras
 import tensorflow as tf
-from eval.common import evaluate_polyp
+from eval.common import evaluate
 import numpy as np
 
 
@@ -67,13 +67,14 @@ class Evaluate(keras.callbacks.Callback):
         logs = logs or {}
 
         # run evaluation
-        average_precisions, recall, precision = evaluate_polyp(
+        average_precisions, recall, precision = evaluate(
             self.generator,
             self.active_model,
             iou_threshold=self.iou_threshold,
             score_threshold=self.score_threshold,
             max_detections=self.max_detections,
-            visualize=False
+            visualize=False,
+            more_metrics=True
         )
 
         # compute per class average precision
