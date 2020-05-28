@@ -15,13 +15,14 @@ if __name__ == '__main__':
         'phi': phi,
     }
     test_generator = CSVGenerator(
-        '../../polyp-datasets/CVC-VideoClinicDB-1.csv',
+        '../../polyp-datasets/ETIS-LaribPolypDB.csv',
         '../../polyp-datasets/class_id.csv',
         shuffle_groups=False,
         **common_args
     )
 
-    model_path = 'checkpoints/exp2/csv_16_0.2631_0.7740.h5'
+    model_path = 'checkpoints/exp2_phi1/csv-rand-val_36_0.1260_0.3505.h5'
+    # model_path = 'checkpoints/exp2/csv_16_0.2631_0.7740.h5'
     # model_path = '../checkpoints/exp1/csv_30_0.1828_0.7413.h5'
 
     input_shape = (test_generator.image_size, test_generator.image_size)
